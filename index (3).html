@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Interactivo de Incoterms 2020</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --seller: #2563eb;
+            --seller-light: #dbeafe;
+            --buyer: #ea580c;
+            --buyer-light: #ffedd5;
+            --risk: #dc2626;
+            --border: #e2e8f0;
+            --accent: #0284c7;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 24px; line-height: 1.5; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 24px; }
+        h1 { font-size: 1.8rem; margin-bottom: 6px; color: #1e293b; }
+        .subtitle { color: var(--muted); font-size: 0.95rem; }
+        
+        .mode-tabs { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .mode-tab { padding: 10px 20px; border-radius: 999px; border: 2px solid var(--border); background: var(--card); cursor: pointer; font-weight: 600; transition: all 0.2s; color: var(--muted); }
+        .mode-tab.active { border-color: var(--seller); background: var(--seller); color: white; }
+
+        .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 24px; }
+        
+        .incoterm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-bottom: 20px; }
+        .incoterm-btn { padding: 12px 8px; border: 2px solid var(--border); background: #f1f5f9; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 0.95rem; text-align: center; transition: all 0.15s; }
+        .incoterm-btn small { display: block; font-weight: 400; font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+        .incoterm-btn:hover { border-color: #94a3b8; }
+        .incoterm-btn.active { background: var(--seller); color: white; border-color: var(--seller); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+        .incoterm-btn.active small { color: #e2e8f0; }
+
+        .info-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .info-box h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
+        .info-box p { font-size: 0.95rem; font-weight: 600; }
+        .info-box.risk-box p { color: var(--risk); }
+
+        .totals-bar { margin-bottom: 24px; }
+        .totals-numbers { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 1.05rem; flex-wrap: wrap; gap: 8px; }
+        .seller-tot { color: var(--seller); }
+        .buyer-tot { color: var(--buyer); }
+        .progress-track { height: 28px; background: var(--buyer-light); border-radius: 999px; overflow: hidden; display: flex; border: 1px solid #fed7aa; }
+        .progress-seller { background: var(--seller); height: 100%; transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 700; }
+        .progress-buyer { background: var(--buyer); height: 100%; transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 700; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f1f5f9; font-weight: 700; color: #334155; font-size: 0.8rem; text-transform: uppercase; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 0.78rem; }
+        .badge-seller { background: var(--seller-light); color: var(--seller); }
+        .badge-buyer { background: var(--buyer-light); color: var(--buyer); }
+        .badge-optional { background: #f1f5f9; color: #475569; }
+        .cost-input { width: 95px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: right; font-weight: 600; font-size: 0.9rem; }
+        .phase-tag { font-size: 0.75rem; color: var(--muted); display: block; }
+        tr.seller-row { background-color: rgba(219, 234, 254, 0.25); }
+        tr.risk-transfer-row { border-bottom: 3px dashed var(--risk); }
+        .risk-marker { color: var(--risk); font-weight: 700; font-size: 0.78rem; display: block; margin-top: 2px; }
+        
+        .glossary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 12px; }
+        .glossary-item { padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #f8fafc; }
+        .glossary-item strong { color: var(--seller); display: block; margin-bottom: 4px; }
+        .glossary-item span { font-size: 0.85rem; color: #334155; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Simulador Interactivo de Incoterms® 2020</h1>
+        <p class="subtitle">Haz clic en cualquier Incoterm para ver quién paga cada gasto (Inland, THC, ISPS, BAF, Aranceles...) y dónde se transmite el riesgo. Puedes editar los importes en € para resolver tus propios ejercicios.</p>
+    </header>
+
+    <div class="mode-tabs">
+        <button class="mode-tab active" onclick="setScenario('maritimo', this)">Modo 1: Escandallo General Marítimo / Polivalente</button>
+        <button class="mode-tab" onclick="setScenario('barajas', this)">Modo 2: Ejercicio 22 (Aéreo Barajas → Cape Town)</button>
+    </div>
+
+    <div class="card">
+        <div class="incoterm-grid" id="incotermButtons"></div>
+
+        <div class="info-banner">
+            <div class="info-box">
+                <h4>Incoterm Seleccionado</h4>
+                <p id="infoName">EXW - Ex Works (En fábrica)</p>
+            </div>
+            <div class="info-box">
+                <h4>Tipo de Transporte</h4>
+                <p id="infoMode">Polivalente (Cualquier medio)</p>
+            </div>
+            <div class="info-box risk-box">
+                <h4>Punto donde pasa el Riesgo al Comprador</h4>
+                <p id="infoRisk">En el almacén del vendedor (sin cargar al camión)</p>
+            </div>
+            <div class="info-box">
+                <h4>Regla de Oro / Trampa de Examen</h4>
+                <p id="infoTrick">El comprador asume incluso la carga inicial y el despacho de exportación.</p>
+            </div>
+        </div>
+
+        <div class="totals-bar">
+            <div class="totals-numbers">
+                <span class="seller-tot">Precio Oferta Vendedor (<span id="currentIncotermLabel">EXW</span>): <span id="sellerTotal">0,00 €</span></span>
+                <span class="buyer-tot">Gastos adicionales del Comprador: <span id="buyerTotal">0,00 €</span></span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-seller" id="sellerBar" style="width: 50%">50%</div>
+                <div class="progress-buyer" id="buyerBar" style="width: 50%">50%</div>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Concepto / Gasto Logístico</th>
+                        <th>Explicación rápida (Siglas)</th>
+                        <th style="text-align:right;">Importe (€)</th>
+                        <th>¿Quién lo paga?</th>
+                    </tr>
+                </thead>
+                <tbody id="costTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 8px;">Chuleta Rápida de Siglas de Examen</h3>
+        <div class="glossary-grid">
+            <div class="glossary-item">
+                <strong>Inland (Origen / Destino)</strong>
+                <span>Transporte interior en camión o tren (ej. de la fábrica al puerto/aeropuerto o del puerto al almacén del cliente).</span>
+            </div>
+            <div class="glossary-item">
+                <strong>THC / GTC</strong>
+                <span><em>Terminal Handling Charges / Ground Terminal Charges</em>. Manipulación en terminal portuaria o aeroportuaria (grúas, carga/descarga).</span>
+            </div>
+            <div class="glossary-item">
+                <strong>ISPS / PNS</strong>
+                <span>Recargos de seguridad antiterrorista en el puerto (ISPS) o seguridad/escáner en el aeropuerto (PNS).</span>
+            </div>
+            <div class="glossary-item">
+                <strong>T-3 (Tasa de la Mercancía)</strong>
+                <span>Peaje oficial que cobra el puerto por el uso de los muelles al embarcar o desembarcar mercancía.</span>
+            </div>
+            <div class="glossary-item">
+                <strong>BAF / CAF / FUEL / IRC</strong>
+                <span>Recargos por combustible (BAF en barco, FUEL en avión), divisa (CAF) o riesgo (IRC). Van <strong>siempre unidos al flete principal</strong>.</span>
+            </div>
+            <div class="glossary-item">
+                <strong>B/L (Marítimo) o AWB (Aéreo)</strong>
+                <span>Emisión del documento de transporte (<em>Bill of Lading</em> o <em>Air Waybill</em>). Entra cuando el vendedor contrata el flete (Grupo C y D).</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const incotermsMeta = {
+    EXW: { name: "EXW - Ex Works (En fábrica)", mode: "Polivalente", risk: "En almacén del vendedor (sin cargar al camión)", trick: "El único donde el comprador hace la aduana de exportación y paga la primera carga." },
+    FCA_FAB: { name: "FCA (Fábrica / Local Vendedor)", mode: "Polivalente", risk: "Al cargar la mercancía en el camión del comprador en fábrica", trick: "El vendedor SÍ carga el camión y hace el despacho de exportación." },
+    FCA_TERM: { name: "FCA (Terminal / Puerto / Aeropuerto)", mode: "Polivalente", risk: "En el puerto/aeropuerto de origen (sobre el camión listo para descarga)", trick: "Incluye el transporte interior en origen (Inland origen) hasta la terminal." },
+    FAS: { name: "FAS - Free Alongside Ship", mode: "Exclusivo Marítimo", risk: "En el muelle de origen, al costado del buque", trick: "No incluye subir la mercancía al barco (THC de estiba a bordo va en FOB)." },
+    FOB: { name: "FOB - Free On Board", mode: "Exclusivo Marítimo", risk: "A bordo del buque en el puerto de salida", trick: "El vendedor paga THC origen, T-3 origen e ISPS origen hasta dejarla a bordo." },
+    CFR: { name: "CFR - Cost and Freight", mode: "Exclusivo Marítimo", risk: "A bordo del buque en origen (¡igual que en FOB!)", trick: "El vendedor paga el flete + BAF/CAF hasta destino, pero el riesgo muere en el puerto de salida." },
+    CPT: { name: "CPT - Carriage Paid To", mode: "Polivalente", risk: "En origen, al entregar al primer transportista", trick: "El vendedor paga el transporte principal (y destino si el lugar nombrado es la ciudad), sin seguro obligatorio." },
+    CIF: { name: "CIF - Cost, Insurance & Freight", mode: "Exclusivo Marítimo", risk: "A bordo del buque en el puerto de origen", trick: "Igual que CFR + Seguro obligatorio (cobertura mínima Cláusula C)." },
+    CIP: { name: "CIP - Carriage & Insurance Paid To", mode: "Polivalente", risk: "En origen, al entregar al primer transportista", trick: "Igual que CPT + Seguro obligatorio a todo riesgo (Cláusula A)." },
+    DAP: { name: "DAP - Delivered at Place", mode: "Polivalente", risk: "En el destino acordado, sobre el vehículo (sin descargar)", trick: "El vendedor asume todo el viaje y riesgo hasta destino, pero NO descarga del camión ni paga importación." },
+    DPU: { name: "DPU - Delivered at Place Unloaded", mode: "Polivalente", risk: "En el destino acordado, UNA VEZ DESCARGADA la mercancía", trick: "Es el ÚNICO Incoterm que obliga al vendedor a pagar la descarga final en destino." },
+    DDP: { name: "DDP - Delivered Duty Paid", mode: "Polivalente", risk: "En el destino acordado (sobre el vehículo), con aduana pagada", trick: "El vendedor paga despacho de importación y aranceles en el país de destino." }
+};
+
+const scenarios = {
+    maritimo: {
+        activeIncoterm: "FOB",
+        available: ["EXW", "FCA_FAB", "FCA_TERM", "FAS", "FOB", "CFR", "CIF", "CPT", "CIP", "DAP", "DPU", "DDP"],
+        items: [
+            { id: "merc", name: "Valor de la mercancía + Embalaje", desc: "Coste producto, envase y verificación", cost: 10000, sellerIn: ["EXW","FCA_FAB","FCA_TERM","FAS","FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"], riskAfter: ["EXW"] },
+            { id: "carga_fab", name: "Carga en fábrica + Despacho Exportación", desc: "Subir al camión inicial + DUA exportación", cost: 250, sellerIn: ["FCA_FAB","FCA_TERM","FAS","FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"], riskAfter: ["FCA_FAB"] },
+            { id: "inland_orig", name: "Inland en Origen (Transporte interior)", desc: "Camión desde fábrica hasta puerto/aeropuerto salida", cost: 450, sellerIn: ["FCA_TERM","FAS","FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"], riskAfter: ["FCA_TERM","CPT","CIP"] },
+            { id: "fas_muelle", name: "Gastos de muelle / Puesta al costado", desc: "Recepción y acarreo interno hasta costado del buque", cost: 150, sellerIn: ["FAS","FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"], riskAfter: ["FAS"] },
+            { id: "thc_orig", name: "THC Origen + ISPS Origen + T-3 Salida", desc: "Grúa de carga a bordo, seguridad portuaria y tasa mercancía", cost: 380, sellerIn: ["FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"], riskAfter: ["FOB","CFR","CIF"] },
+            { id: "flete", name: "Flete Principal + BAF + CAF + B/L (o AWB)", desc: "Transporte marítimo/aéreo + recargos combustible/divisa + documento", cost: 1850, sellerIn: ["CFR","CIF","CPT","CIP","DAP","DPU","DDP"], riskAfter: [] },
+            { id: "seguro", name: "Seguro de Transporte Internacional", desc: "Obligatorio en CIF/CIP y asumido por riesgo en Grupo D", cost: 140, sellerIn: ["CIF","CIP","DAP","DPU","DDP"], riskAfter: [] },
+            { id: "thc_dest", name: "THC Destino + ISPS Destino + T-3 Llegada", desc: "Descarga del barco/avión y tasas en terminal de destino", cost: 320, sellerIn: ["DAP","DPU","DDP"], riskAfter: [] },
+            { id: "inland_dest", name: "Inland en Destino (Puerto a Ciudad/Almacén)", desc: "Camión desde terminal de llegada hasta local del comprador", cost: 400, sellerIn: ["DAP","DPU","DDP"], riskAfter: ["DAP","DDP"] },
+            { id: "descarga_dest", name: "Descarga en Almacén del Comprador", desc: "Bajar la mercancía del camión en destino (Exclusivo DPU)", cost: 180, sellerIn: ["DPU"], riskAfter: ["DPU"] },
+            { id: "aduana_imp", name: "Despacho Importación + Aranceles + Cert. Origen", desc: "Trámites aduaneros de entrada e impuestos (Exclusivo DDP)", cost: 920, sellerIn: ["DDP"], riskAfter: [] }
+        ]
+    },
+    barajas: {
+        activeIncoterm: "CPT",
+        available: ["EXW", "FCA_TERM", "CPT", "CIP", "DDP"],
+        items: [
+            { id: "b_merc", name: "Valor de la mercancía según catálogo", desc: "Precio base en fábrica (Granada)", cost: 100000, sellerIn: ["EXW","FCA_TERM","CPT","CIP","DDP"], riskAfter: [] },
+            { id: "b_emb", name: "Embalaje", desc: "Acondicionamiento en 1 caja (1.500 kg tasables)", cost: 120, sellerIn: ["EXW","FCA_TERM","CPT","CIP","DDP"], riskAfter: ["EXW"] },
+            { id: "b_inland1", name: "Transporte Granada - Barajas (Inland Origen)", desc: "Camión desde Granada hasta Aeropuerto Madrid-Barajas", cost: 710, sellerIn: ["FCA_TERM","CPT","CIP","DDP"], riskAfter: [] },
+            { id: "b_desp_exp", name: "Despacho de exportación", desc: "Aduana de salida en España", cost: 55, sellerIn: ["FCA_TERM","CPT","CIP","DDP"], riskAfter: ["FCA_TERM"] },
+            { id: "b_gtc_mad", name: "GTC Barajas + PNS Barajas (300 € + 55 €)", desc: "Manipulación terminal origen + Plan Nacional Seguridad", cost: 355, sellerIn: ["CPT","CIP","DDP"], riskAfter: ["CPT","CIP"] },
+            { id: "b_awb", name: "Emisión AWB (Air Waybill)", desc: "Conocimiento de embarque aéreo", cost: 40, sellerIn: ["CPT","CIP","DDP"], riskAfter: [] },
+            { id: "b_flete", name: "Flete Aéreo (Tarifa Q1000: 750€ + FUEL: 1.485€ + IRC: 90€)", desc: "1.500 kg × (0,50 + 0,99 + 0,06 €/kg)", cost: 2325, sellerIn: ["CPT","CIP","DDP"], riskAfter: [] },
+            { id: "b_seguro", name: "Seguro tramo aéreo", desc: "Entra en CIP Aeropuerto (base arancel: 103.785 €) y en DDP", cost: 180, sellerIn: ["CIP","DDP"], riskAfter: [] },
+            { id: "b_gtc_cpt", name: "GTC CPT (Terminal Aeropuerto Cape Town)", desc: "Manipulación en aeropuerto de llegada (Incluido en CPT Ciudad)", cost: 320, sellerIn: ["CPT","DDP"], riskAfter: [] },
+            { id: "b_inland2", name: "Transporte Aeropuerto CPT - Ciudad CPT", desc: "Inland destino hasta Ciudad del Cabo (pedido en CPT Ciudad)", cost: 240, sellerIn: ["CPT","DDP"], riskAfter: [] },
+            { id: "b_imp", name: "Cert. Origen (35€) + Despacho Imp. (60€) + Arancel (7.264,95€)", desc: "Exclusivo DDP (Arancel = 7% sobre CIP Aeropuerto 103.785 €)", cost: 7359.95, sellerIn: ["DDP"], riskAfter: ["DDP"] }
+        ]
+    }
+};
+
+let currentScenarioKey = "maritimo";
+
+function setScenario(key, btnEl) {
+    currentScenarioKey = key;
+    document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+    renderButtons();
+    renderTable();
+}
+
+function selectIncoterm(code) {
+    scenarios[currentScenarioKey].activeIncoterm = code;
+    renderButtons();
+    renderTable();
+}
+
+function renderButtons() {
+    const container = document.getElementById('incotermButtons');
+    const sc = scenarios[currentScenarioKey];
+    container.innerHTML = '';
+    sc.available.forEach(code => {
+        const btn = document.createElement('button');
+        btn.className = 'incoterm-btn' + (sc.activeIncoterm === code ? ' active' : '');
+        const label = code === 'FCA_FAB' ? 'FCA (Fábrica)' : (code === 'FCA_TERM' ? (currentScenarioKey === 'barajas' ? 'FCA Barajas' : 'FCA (Puerto)') : (code === 'CPT' && currentScenarioKey === 'barajas' ? 'CPT Ciudad' : (code === 'CIP' && currentScenarioKey === 'barajas' ? 'CIP Aerop.' : code)));
+        const sub = ['FAS','FOB','CFR','CIF'].includes(code) ? 'Marítimo' : 'Polivalente';
+        btn.innerHTML = `${label}<small>${sub}</small>`;
+        btn.onclick = () => selectIncoterm(code);
+        container.appendChild(btn);
+    });
+}
+
+function updateCost(index, val) {
+    const num = parseFloat(val) || 0;
+    scenarios[currentScenarioKey].items[index].cost = num;
+    renderTable();
+}
+
+function formatEUR(num) {
+    return num.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function renderTable() {
+    const sc = scenarios[currentScenarioKey];
+    const code = sc.activeIncoterm;
+    const meta = incotermsMeta[code];
+
+    document.getElementById('infoName').textContent = meta.name;
+    document.getElementById('infoMode').textContent = meta.mode;
+    document.getElementById('infoRisk').textContent = meta.risk;
+    document.getElementById('infoTrick').textContent = meta.trick;
+    document.getElementById('currentIncotermLabel').textContent = code.replace('_FAB',' Fábrica').replace('_TERM',' Terminal/Barajas');
+
+    const tbody = document.getElementById('costTableBody');
+    tbody.innerHTML = '';
+
+    let sellerSum = 0;
+    let buyerSum = 0;
+
+    sc.items.forEach((item, idx) => {
+        const isSeller = item.sellerIn.includes(code);
+        if (isSeller) sellerSum += item.cost;
+        else buyerSum += item.cost;
+
+        const isRiskPoint = item.riskAfter.includes(code);
+        const tr = document.createElement('tr');
+        tr.className = (isSeller ? 'seller-row ' : '') + (isRiskPoint ? 'risk-transfer-row' : '');
+
+        tr.innerHTML = `
+            <td>
+                <strong>${item.name}</strong>
+                ${isRiskPoint ? '<span class="risk-marker">⚡ AQUÍ SE TRANSMITE EL RIESGO AL COMPRADOR</span>' : ''}
+            </td>
+            <td><span class="phase-tag">${item.desc}</span></td>
+            <td style="text-align:right;">
+                <input type="number" step="0.01" class="cost-input" value="${item.cost}" onchange="updateCost(${idx}, this.value)">
+            </td>
+            <td>
+                <span class="badge ${isSeller ? 'badge-seller' : 'badge-buyer'}">
+                    ${isSeller ? 'PAGA VENDEDOR (Entra en ' + code.split('_')[0] + ')' : 'PAGA COMPRADOR (No entra)'}
+                </span>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const total = sellerSum + buyerSum || 1;
+    const sellerPct = Math.round((sellerSum / total) * 100);
+    const buyerPct = 100 - sellerPct;
+
+    document.getElementById('sellerTotal').textContent = formatEUR(sellerSum);
+    document.getElementById('buyerTotal').textContent = formatEUR(buyerSum);
+
+    const sBar = document.getElementById('sellerBar');
+    const bBar = document.getElementById('buyerBar');
+    sBar.style.width = `${sellerPct}%`;
+    sBar.textContent = sellerPct > 8 ? `Vendedor (${sellerPct}%)` : '';
+    bBar.style.width = `${buyerPct}%`;
+    bBar.textContent = buyerPct > 8 ? `Comprador (${buyerPct}%)` : '';
+}
+
+renderButtons();
+renderTable();
+</script>
+</body>
+</html>
